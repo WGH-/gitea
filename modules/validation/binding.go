@@ -15,6 +15,9 @@ import (
 const (
 	// ErrGitRefName is git reference name error
 	ErrGitRefName = "GitRefNameError"
+
+	// ErrRegexp is returned when regexp is invalid
+	ErrRegexp = "RegexpErr"
 )
 
 var (
@@ -28,6 +31,7 @@ var (
 func AddBindingRules() {
 	addGitRefNameBindingRule()
 	addValidURLBindingRule()
+	addRegexpRule()
 }
 
 func addGitRefNameBindingRule() {
@@ -75,6 +79,26 @@ func addValidURLBindingRule() {
 			if len(str) != 0 && !IsValidURL(str) {
 				errs.Add([]string{name}, binding.ERR_URL, "Url")
 				return false, errs
+			}
+
+			return true, errs
+		},
+	})
+}
+
+func addRegexpRule() {
+	binding.AddRule(&binding.Rule{
+		IsMatch: func(rule string) bool {
+			return strings.HasPrefix(rule, "Regexp")
+		},
+		IsValid: func(errs binding.Errors, name string, val interface{}) (bool, binding.Errors) {
+			str := fmt.Sprintf("%v", val)
+
+			if str != "" {
+				if _, err := regexp.Compile(str); err != nil {
+					errs.Add([]string{name}, ErrRegexp, err.Error())
+					return false, errs
+				}
 			}
 
 			return true, errs

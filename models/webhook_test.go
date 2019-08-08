@@ -270,6 +270,39 @@ func TestPrepareWebhooks(t *testing.T) {
 	}
 }
 
+func TestPrepareWebhooksBranchFilterMatch(t *testing.T) {
+	assert.NoError(t, PrepareTestDatabase())
+
+	repo := AssertExistsAndLoadBean(t, &Repository{ID: 2}).(*Repository)
+	hookTasks := []*HookTask{
+		{RepoID: repo.ID, HookID: 4, EventType: HookEventPush},
+	}
+	for _, hookTask := range hookTasks {
+		AssertNotExistsBean(t, hookTask)
+	}
+	assert.NoError(t, PrepareWebhooks(repo, HookEventPush, &api.PushPayload{Ref: "refs/heads/master"}))
+	for _, hookTask := range hookTasks {
+		AssertExistsAndLoadBean(t, hookTask)
+	}
+}
+
+func TestPrepareWebhooksBranchFilterNoMatch(t *testing.T) {
+	assert.NoError(t, PrepareTestDatabase())
+
+	repo := AssertExistsAndLoadBean(t, &Repository{ID: 2}).(*Repository)
+	hookTasks := []*HookTask{
+		{RepoID: repo.ID, HookID: 4, EventType: HookEventPush},
+	}
+	for _, hookTask := range hookTasks {
+		AssertNotExistsBean(t, hookTask)
+	}
+	assert.NoError(t, PrepareWebhooks(repo, HookEventPush, &api.PushPayload{Ref: "refs/heads/fix_weird_bug"}))
+
+	for _, hookTask := range hookTasks {
+		AssertNotExistsBean(t, hookTask)
+	}
+}
+
 // TODO TestHookTask_deliver
 
 // TODO TestDeliverHooks

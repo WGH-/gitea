@@ -182,6 +182,7 @@ type WebhookForm struct {
 	PullRequest  bool
 	Repository   bool
 	Active       bool
+	BranchFilter string `binding:"Regexp"`
 }
 
 // PushOnly if the hook will be triggered when push
